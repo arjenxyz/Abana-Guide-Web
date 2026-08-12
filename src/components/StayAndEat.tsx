@@ -9,7 +9,6 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaUtensils,
-  type IconType,
 } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { dining, lodging, telHref } from "@/lib/stay-and-eat";
@@ -62,7 +61,7 @@ export default function StayAndEat() {
 
   const tabItems: {
     id: Tab;
-    icon: IconType;
+    icon: typeof FaBed;
     label: string;
     shortLabel: string;
   }[] = [
