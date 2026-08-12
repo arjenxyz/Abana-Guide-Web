@@ -17,58 +17,26 @@ type DailyBudgetState = {
   spentUsd: number;
 };
 
-type XaiInputMessage = {
+type GroqMessage = {
   role: "system" | "user" | "assistant";
   content: string;
 };
 
-type XaiOutputItem = {
-  type?: string;
-  role?: string;
-  content?: Array<{ type?: string; text?: string }>;
-};
-
-type XaiUsage = {
-  input_tokens?: number;
-  output_tokens?: number;
-  total_tokens?: number;
-  prompt_tokens?: number;
-  completion_tokens?: number;
-};
-
-type ReasoningEffort = "none" | "low" | "medium" | "high";
-
-type XaiModelConfig = {
+type GroqModelConfig = {
   id: string;
-  reasoning?: ReasoningEffort;
   inputCost: number;
   outputCost: number;
 };
 
-/** Text models ordered cheapest-first to stretch free credits. */
-const XAI_TEXT_MODELS: XaiModelConfig[] = [
-  { id: "grok-build-0.1", inputCost: 1, outputCost: 2 },
-  { id: "grok-4.20-0309-non-reasoning", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4.3", reasoning: "none", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4-1-fast-non-reasoning", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4-fast-non-reasoning", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-3-mini", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4.20-0309-reasoning", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4.3", reasoning: "low", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4-1-fast-reasoning", inputCost: 1.25, outputCost: 2.5 },
-  { id: "grok-4-fast-reasoning", inputCost: 1.25, outputCost: 2.5 },
-  {
-    id: "grok-4.20-multi-agent-0309",
-    reasoning: "low",
-    inputCost: 1.25,
-    outputCost: 2.5,
-  },
-  { id: "grok-4.5", reasoning: "low", inputCost: 2, outputCost: 6 },
-  { id: "grok-4.5", reasoning: "medium", inputCost: 2, outputCost: 6 },
-  { id: "grok-2-mini", inputCost: 0.2, outputCost: 0.5 },
-  { id: "grok-2", inputCost: 2, outputCost: 10 },
-  { id: "grok-beta", inputCost: 2, outputCost: 10 },
+/** Groq production chat models — free tier, no credit card. Cheapest first. */
+const GROQ_TEXT_MODELS: GroqModelConfig[] = [
+  { id: "llama-3.1-8b-instant", inputCost: 0.05, outputCost: 0.08 },
+  { id: "openai/gpt-oss-20b", inputCost: 0.075, outputCost: 0.3 },
+  { id: "llama-3.3-70b-versatile", inputCost: 0.59, outputCost: 0.79 },
+  { id: "openai/gpt-oss-120b", inputCost: 0.15, outputCost: 0.6 },
 ];
+
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const SYSTEM_PROMPT_TR = `
 Sen Abana (Kastamonu) için çalışan profesyonel bir turizm asistanısın.
@@ -106,8 +74,8 @@ const RATE_LIMIT_PER_MINUTE = Number(
 );
 const RATE_LIMIT_PER_DAY = Number(process.env.CHAT_RATE_LIMIT_PER_DAY ?? 200);
 const DAILY_BUDGET_USD = Number(process.env.CHAT_DAILY_BUDGET_USD ?? 3);
-const DEFAULT_INPUT_COST = Number(process.env.XAI_INPUT_COST_PER_1M ?? 1.25);
-const DEFAULT_OUTPUT_COST = Number(process.env.XAI_OUTPUT_COST_PER_1M ?? 2.5);
+const DEFAULT_INPUT_COST = Number(process.env.GROQ_INPUT_COST_PER_1M ?? 0.05);
+const DEFAULT_OUTPUT_COST = Number(process.env.GROQ_OUTPUT_COST_PER_1M ?? 0.08);
 
 const globalForChat = globalThis as typeof globalThis & {
   __chatRateMap?: Map<string, RequestCounter>;
@@ -122,10 +90,6 @@ const dailyBudgetState = globalForChat.__chatDailyBudget ?? {
   spentUsd: 0,
 };
 globalForChat.__chatDailyBudget = dailyBudgetState;
-
-function modelKey(config: XaiModelConfig): string {
-  return `${config.id}:${config.reasoning ?? "default"}`;
-}
 
 function dayKeyFromNow(): string {
   return new Date().toISOString().slice(0, 10);
@@ -184,7 +148,7 @@ function estimateInputTokens(messages: ChatMessage[], systemPrompt: string): num
 function estimateWorstCaseUsd(
   messages: ChatMessage[],
   systemPrompt: string,
-  config: XaiModelConfig
+  config: GroqModelConfig
 ): number {
   const estimatedInputTokens = estimateInputTokens(messages, systemPrompt);
   const inputCost = (estimatedInputTokens / 1_000_000) * config.inputCost;
@@ -192,10 +156,13 @@ function estimateWorstCaseUsd(
   return inputCost + outputCost;
 }
 
-function calculateActualUsd(usage: XaiUsage | undefined, config: XaiModelConfig): number {
+function calculateActualUsd(
+  usage: { prompt_tokens?: number; completion_tokens?: number } | undefined,
+  config: GroqModelConfig
+): number {
   if (!usage) return 0;
-  const inputTokens = usage.input_tokens ?? usage.prompt_tokens ?? 0;
-  const outputTokens = usage.output_tokens ?? usage.completion_tokens ?? 0;
+  const inputTokens = usage.prompt_tokens ?? 0;
+  const outputTokens = usage.completion_tokens ?? 0;
   const inputCost = (inputTokens / 1_000_000) * config.inputCost;
   const outputCost = (outputTokens / 1_000_000) * config.outputCost;
   return inputCost + outputCost;
@@ -226,10 +193,10 @@ function normalizeMessages(input: unknown): ChatMessage[] {
     .slice(-10);
 }
 
-function toXaiInput(
+function toGroqMessages(
   messages: ChatMessage[],
   systemPrompt: string
-): XaiInputMessage[] {
+): GroqMessage[] {
   return [
     { role: "system", content: systemPrompt.trim() },
     ...messages.map((m) => ({
@@ -239,8 +206,8 @@ function toXaiInput(
   ];
 }
 
-function resolveModelCandidates(): XaiModelConfig[] {
-  const customList = process.env.XAI_MODELS?.split(",")
+function resolveModelCandidates(): GroqModelConfig[] {
+  const customList = process.env.GROQ_MODELS?.split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 
@@ -252,27 +219,26 @@ function resolveModelCandidates(): XaiModelConfig[] {
     }));
   }
 
-  const primaryId = (process.env.XAI_MODEL ?? "grok-build-0.1").trim();
+  const primaryId = (process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile").trim();
   const primary =
-    XAI_TEXT_MODELS.find((model) => model.id === primaryId) ?? {
+    GROQ_TEXT_MODELS.find((model) => model.id === primaryId) ?? {
       id: primaryId,
       inputCost: DEFAULT_INPUT_COST,
       outputCost: DEFAULT_OUTPUT_COST,
     };
 
   const seen = new Set<string>();
-  const ordered: XaiModelConfig[] = [];
+  const ordered: GroqModelConfig[] = [];
 
-  const add = (config: XaiModelConfig) => {
-    const key = modelKey(config);
-    if (seen.has(key)) return;
-    seen.add(key);
+  const add = (config: GroqModelConfig) => {
+    if (seen.has(config.id)) return;
+    seen.add(config.id);
     ordered.push(config);
   };
 
   add(primary);
 
-  const byCost = [...XAI_TEXT_MODELS].sort(
+  const byCost = [...GROQ_TEXT_MODELS].sort(
     (a, b) => a.inputCost + a.outputCost - (b.inputCost + b.outputCost)
   );
   for (const config of byCost) {
@@ -282,7 +248,7 @@ function resolveModelCandidates(): XaiModelConfig[] {
   return ordered;
 }
 
-function parseXaiError(body: string): string {
+function parseGroqError(body: string): string {
   try {
     const parsed = JSON.parse(body) as {
       error?: string | { message?: string };
@@ -297,7 +263,7 @@ function parseXaiError(body: string): string {
 function isQuotaExceeded(status: number, detail: string): boolean {
   return (
     status === 429 ||
-    /quota|rate limit|rate-limit|resource exhausted|billing|credits|spending limit/i.test(
+    /quota|rate limit|rate-limit|too many requests|tokens per minute|requests per minute/i.test(
       detail
     )
   );
@@ -311,8 +277,8 @@ function shouldTryNextModel(status: number, detail: string): boolean {
   if (isAuthError(status)) return false;
   if (status === 404 || status === 400 || status === 422) return true;
   if (isQuotaExceeded(status, detail)) return true;
-  if (status === 402 || status === 503 || status >= 500) return true;
-  if (/not found|not supported|invalid model|does not exist/i.test(detail)) {
+  if (status === 503 || status >= 500) return true;
+  if (/not found|decommissioned|invalid model|does not exist|model_not_found/i.test(detail)) {
     return true;
   }
   return false;
@@ -321,87 +287,29 @@ function shouldTryNextModel(status: number, detail: string): boolean {
 function quotaErrorMessage(locale: string): string {
   if (locale === "en") {
     return (
-      "All xAI models are unavailable — free credits or quota may be exhausted. " +
-      "Check usage at https://console.x.ai and add credits if needed."
+      "Groq rate limit reached on all models. The free tier allows ~30 requests/min — " +
+      "wait a moment and try again. See https://console.groq.com/docs/rate-limits"
     );
   }
   return (
-    "Tüm xAI modelleri denendi; ücretsiz kredi veya kota tükenmiş olabilir. " +
-    "https://console.x.ai adresinden kullanımı kontrol edin ve gerekirse kredi ekleyin."
+    "Groq hız limiti doldu (tüm modeller denendi). Ücretsiz planda ~30 istek/dakika sınırı var — " +
+    "biraz bekleyip tekrar deneyin. Detay: https://console.groq.com/docs/rate-limits"
   );
 }
 
-function buildResponsesBody(
-  config: XaiModelConfig,
-  input: XaiInputMessage[]
-): Record<string, unknown> {
-  const body: Record<string, unknown> = {
-    model: config.id,
-    input,
-    max_output_tokens: MAX_OUTPUT_TOKENS,
-    store: false,
-    temperature: 0.3,
-  };
-
-  if (config.reasoning) {
-    body.reasoning = { effort: config.reasoning };
-  }
-
-  return body;
-}
-
-function extractResponsesReply(data: {
-  output_text?: string;
-  output?: XaiOutputItem[];
-}): string {
-  if (typeof data.output_text === "string" && data.output_text.trim()) {
-    return data.output_text.trim();
-  }
-
-  const parts: string[] = [];
-  for (const item of data.output ?? []) {
-    if (item.type !== "message") continue;
-    for (const block of item.content ?? []) {
-      if (
-        (block.type === "output_text" || block.type === "text") &&
-        block.text?.trim()
-      ) {
-        parts.push(block.text.trim());
-      }
-    }
-  }
-
-  return parts.join("\n").trim();
-}
-
-function extractChatCompletionReply(data: {
+function extractReply(data: {
   choices?: Array<{ message?: { content?: string } }>;
 }): string {
   const content = data.choices?.[0]?.message?.content;
   return typeof content === "string" ? content.trim() : "";
 }
 
-async function callXaiResponses(
+async function callGroq(
   apiKey: string,
-  config: XaiModelConfig,
-  input: XaiInputMessage[]
+  config: GroqModelConfig,
+  messages: GroqMessage[]
 ) {
-  return fetch("https://api.x.ai/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(buildResponsesBody(config, input)),
-  });
-}
-
-async function callXaiChatCompletions(
-  apiKey: string,
-  config: XaiModelConfig,
-  input: XaiInputMessage[]
-) {
-  return fetch("https://api.x.ai/v1/chat/completions", {
+  return fetch(GROQ_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -409,74 +317,58 @@ async function callXaiChatCompletions(
     },
     body: JSON.stringify({
       model: config.id,
-      messages: input,
+      messages,
       max_tokens: MAX_OUTPUT_TOKENS,
       temperature: 0.3,
     }),
   });
 }
 
-type XaiSuccess = {
-  ok: true;
-  model: XaiModelConfig;
-  data: Record<string, unknown>;
-  via: "responses" | "chat-completions";
-};
-
-type XaiFailure = {
-  ok: false;
-  error: string;
-  quotaExceeded: boolean;
-  authError: boolean;
-};
-
-async function tryModel(
+async function generateWithGroq(
   apiKey: string,
-  config: XaiModelConfig,
-  input: XaiInputMessage[]
-): Promise<
-  | XaiSuccess
-  | { ok: false; error: string; quotaExceeded: boolean; authError: boolean; retry: boolean }
-> {
-  const attempts = [
-    { via: "responses" as const, call: callXaiResponses },
-    { via: "chat-completions" as const, call: callXaiChatCompletions },
-  ];
+  messages: ChatMessage[],
+  systemPrompt: string
+) {
+  const models = resolveModelCandidates();
+  const groqMessages = toGroqMessages(messages, systemPrompt);
+  let lastError = "Groq isteği başarısız oldu.";
+  let quotaFailures = 0;
+  let attempts = 0;
 
-  let lastError = "xAI isteği başarısız oldu.";
-  let lastQuota = false;
+  for (const config of models) {
+    attempts += 1;
+    const response = await callGroq(apiKey, config, groqMessages);
 
-  for (const attempt of attempts) {
-    const response = await attempt.call(apiKey, config, input);
     if (response.ok) {
-      const data = (await response.json()) as Record<string, unknown>;
-      return { ok: true, model: config, data, via: attempt.via };
+      const data = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      };
+      return { ok: true as const, model: config, data };
     }
 
     const errText = await response.text();
-    lastError = parseXaiError(errText);
-    lastQuota = isQuotaExceeded(response.status, lastError);
+    lastError = parseGroqError(errText);
+    const quota = isQuotaExceeded(response.status, lastError);
 
     console.error(
-      "xAI error",
-      modelKey(config),
-      attempt.via,
+      "Groq error",
+      config.id,
       response.status,
       errText.slice(0, 400)
     );
 
     if (isAuthError(response.status)) {
       return {
-        ok: false,
+        ok: false as const,
         error: lastError,
         quotaExceeded: false,
         authError: true,
-        retry: false,
       };
     }
 
-    if (response.status === 404 || response.status === 400) {
-      continue;
+    if (quota) {
+      quotaFailures += 1;
     }
 
     if (!shouldTryNextModel(response.status, lastError)) {
@@ -485,50 +377,7 @@ async function tryModel(
   }
 
   return {
-    ok: false,
-    error: lastError,
-    quotaExceeded: lastQuota,
-    authError: false,
-    retry: true,
-  };
-}
-
-async function generateWithXai(
-  apiKey: string,
-  messages: ChatMessage[],
-  systemPrompt: string
-): Promise<XaiSuccess | XaiFailure> {
-  const models = resolveModelCandidates();
-  const input = toXaiInput(messages, systemPrompt);
-  let lastError = "xAI isteği başarısız oldu.";
-  let quotaFailures = 0;
-  let attempts = 0;
-
-  for (const config of models) {
-    attempts += 1;
-    const result = await tryModel(apiKey, config, input);
-
-    if (result.ok) {
-      return result;
-    }
-
-    lastError = result.error;
-
-    if (result.authError) {
-      return { ok: false, error: lastError, quotaExceeded: false, authError: true };
-    }
-
-    if (result.quotaExceeded) {
-      quotaFailures += 1;
-    }
-
-    if (!result.retry) {
-      break;
-    }
-  }
-
-  return {
-    ok: false,
+    ok: false as const,
     error: lastError,
     quotaExceeded: attempts > 0 && quotaFailures === attempts,
     authError: false,
@@ -537,10 +386,10 @@ async function generateWithXai(
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.XAI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "XAI_API_KEY tanımlı değil." },
+        { error: "GROQ_API_KEY tanımlı değil." },
         { status: 500 }
       );
     }
@@ -564,8 +413,8 @@ export async function POST(req: Request) {
     }
 
     resetBudgetIfNewDay();
-    const cheapest = resolveModelCandidates()[0];
-    const estimatedCost = estimateWorstCaseUsd(messages, systemPrompt, cheapest);
+    const primaryModel = resolveModelCandidates()[0];
+    const estimatedCost = estimateWorstCaseUsd(messages, systemPrompt, primaryModel);
     if (dailyBudgetState.spentUsd + estimatedCost > DAILY_BUDGET_USD) {
       return NextResponse.json(
         {
@@ -576,33 +425,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const xaiResult = await generateWithXai(apiKey, messages, systemPrompt);
+    const groqResult = await generateWithGroq(apiKey, messages, systemPrompt);
 
-    if (!xaiResult.ok) {
-      if (xaiResult.quotaExceeded) {
+    if (!groqResult.ok) {
+      if (groqResult.quotaExceeded) {
         return NextResponse.json(
           { error: quotaErrorMessage(locale) },
           { status: 429 }
         );
       }
 
-      return NextResponse.json({ error: xaiResult.error }, { status: 502 });
+      return NextResponse.json({ error: groqResult.error }, { status: 502 });
     }
 
-    const reply =
-      xaiResult.via === "responses"
-        ? extractResponsesReply(
-            xaiResult.data as {
-              output_text?: string;
-              output?: XaiOutputItem[];
-            }
-          )
-        : extractChatCompletionReply(
-            xaiResult.data as {
-              choices?: Array<{ message?: { content?: string } }>;
-            }
-          );
-
+    const reply = extractReply(groqResult.data);
     if (!reply) {
       return NextResponse.json(
         { error: "Modelden yanıt alınamadı." },
@@ -611,8 +447,8 @@ export async function POST(req: Request) {
     }
 
     dailyBudgetState.spentUsd += calculateActualUsd(
-      xaiResult.data.usage as XaiUsage | undefined,
-      xaiResult.model
+      groqResult.data.usage,
+      groqResult.model
     );
 
     return NextResponse.json({ reply });
