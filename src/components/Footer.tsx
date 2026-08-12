@@ -46,6 +46,12 @@ export default function Footer() {
                 {t.nav.activities}
               </Link>
               <Link
+                href="#panorama"
+                className="text-white/50 hover:text-primary-light transition-colors text-sm"
+              >
+                {t.nav.panorama}
+              </Link>
+              <Link
                 href="#ulasim"
                 className="text-white/50 hover:text-primary-light transition-colors text-sm"
               >
@@ -96,8 +102,9 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="border-t border-white/10 pt-8 text-center text-white/30 text-sm">
-          {t.footer.copyright}
+        <div className="border-t border-white/10 pt-8 text-center text-white/30 text-sm space-y-1">
+          <p>{t.footer.copyright}</p>
+          <p>{t.footer.photoCredit}</p>
         </div>
       </div>
     </footer>

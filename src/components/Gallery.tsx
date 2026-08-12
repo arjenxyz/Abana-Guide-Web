@@ -3,32 +3,17 @@
 import { useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { photos } from "@/lib/photos";
 
 const galleryImages = [
-  {
-    src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
-    span: "col-span-2 row-span-2",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
-    span: "",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
-    span: "",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1504681869696-d977211a5f4c?w=600&q=80",
-    span: "",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=600&q=80",
-    span: "",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80",
-    span: "col-span-2",
-  },
+  { src: photos.sahil, span: "col-span-2 row-span-2" },
+  { src: photos.gokkusagi, span: "" },
+  { src: photos.yesilyuva, span: "" },
+  { src: photos.piknik, span: "" },
+  { src: photos.kordon, span: "" },
+  { src: photos.gunbatimi, span: "" },
+  { src: photos.konak, span: "" },
+  { src: photos.palmiye, span: "col-span-2" },
 ];
 
 export default function Gallery() {
@@ -88,9 +73,7 @@ export default function Gallery() {
             <FaTimes />
           </button>
           <img
-            src={images[lightbox].src
-              .replace("w=600", "w=1200")
-              .replace("w=800", "w=1200")}
+            src={images[lightbox].src}
             alt={images[lightbox].label}
             className="max-w-full max-h-[85vh] rounded-xl object-contain"
           />

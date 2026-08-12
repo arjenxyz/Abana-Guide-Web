@@ -7,6 +7,7 @@ import {
   FaTemperatureHigh,
 } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { photos } from "@/lib/photos";
 
 const statIcons = [FaUmbrellaBeach, FaMountain, FaRoad, FaTemperatureHigh];
 
@@ -54,7 +55,7 @@ export default function About() {
           <div className="relative">
             <div className="rounded-3xl overflow-hidden shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80"
+                src={photos.kasaba}
                 alt={t.about.beachAlt}
                 className="w-full h-[400px] object-cover"
               />

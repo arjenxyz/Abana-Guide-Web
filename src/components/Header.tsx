@@ -18,6 +18,7 @@ export default function Header() {
     { href: "#yerler", label: t.nav.places },
     { href: "#aktiviteler", label: t.nav.activities },
     { href: "#galeri", label: t.nav.gallery },
+    { href: "#panorama", label: t.nav.panorama },
     { href: "#ulasim", label: t.nav.transport },
   ];
 

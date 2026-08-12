@@ -16,14 +16,15 @@ import {
   FaLandmark,
 } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { photos } from "@/lib/photos";
 
 const placeImages = [
-  "https://images.unsplash.com/photo-1504681869696-d977211a5f4c?w=600&q=80",
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
-  "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
-  "https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=600&q=80",
-  "https://images.unsplash.com/photo-1548013146-72479768bada?w=600&q=80",
+  photos.falez,
+  photos.bayrak,
+  photos.orman,
+  photos.sahilKoy,
+  photos.yesilyuva,
+  photos.konak,
 ];
 
 const badgeIcons = [FaHiking, FaBinoculars, FaTree, FaWater, FaMountain, FaMosque];

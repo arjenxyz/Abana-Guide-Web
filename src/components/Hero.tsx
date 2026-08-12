@@ -8,6 +8,7 @@ import {
 } from "react-icons/fa";
 import Link from "next/link";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { photos } from "@/lib/photos";
 
 const slideHrefs = ["#yerler", "#hakkinda", "#aktiviteler"];
 
@@ -16,11 +17,7 @@ export default function Hero() {
   const slides = t.hero.slides.map((slide, i) => ({
     ...slide,
     href: slideHrefs[i],
-    image: [
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",
-      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80",
-      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80",
-    ][i],
+    image: [photos.sahil, photos.kordon, photos.gokkusagi][i],
   }));
 
   const [current, setCurrent] = useState(0);

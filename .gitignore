@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# original camera dump (large RAW/video); site uses optimized copies in /public/photos
+/public/photos-arjen/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
