@@ -19,19 +19,7 @@ export const photos = {
   kayalik: "/photos/arjen-kayalik.jpg",
   falez: "/photos/arjen-falez.jpg",
   yokus: "/photos/arjen-yokus.jpg",
+  kanyon: "/photos/haciveli-kopru.jpg",
+  toza: "/photos/toza-seyir.jpg",
+  cami: "/photos/abana-cami.jpg",
 } as const;
-
-export const panoramas = [
-  {
-    id: "sahil",
-    src: "/photos/arjen-pano-sahil.jpg",
-  },
-  {
-    id: "yesilyuva",
-    src: "/photos/arjen-pano-yesilyuva.jpg",
-  },
-  {
-    id: "gece",
-    src: "/photos/arjen-pano-gece.jpg",
-  },
-] as const;

@@ -17,7 +17,7 @@ export default function Hero() {
   const slides = t.hero.slides.map((slide, i) => ({
     ...slide,
     href: slideHrefs[i],
-    image: [photos.sahil, photos.kordon, photos.gokkusagi][i],
+    image: [photos.sahil, photos.dalga, photos.gokkusagi][i],
   }));
 
   const [current, setCurrent] = useState(0);

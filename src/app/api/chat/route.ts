@@ -73,7 +73,15 @@ function getSystemPrompt(locale: string): string {
 }
 
 const MAX_OUTPUT_TOKENS = 500;
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+const RAW_GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const DEPRECATED_MODELS: Record<string, string> = {
+  "gemini-2.0-flash": "gemini-2.5-flash",
+  "gemini-2.0-flash-001": "gemini-2.5-flash",
+  "gemini-2.0-flash-lite": "gemini-2.5-flash-lite",
+  "gemini-1.5-flash": "gemini-2.5-flash",
+  "gemini-1.5-pro": "gemini-2.5-flash",
+};
+const GEMINI_MODEL = DEPRECATED_MODELS[RAW_GEMINI_MODEL] ?? RAW_GEMINI_MODEL;
 const USE_GOOGLE_SEARCH = process.env.GEMINI_USE_SEARCH !== "false";
 const RATE_LIMIT_PER_MINUTE = Number(
   process.env.CHAT_RATE_LIMIT_PER_MINUTE ?? 20
@@ -217,6 +225,18 @@ function extractSources(metadata?: GroundingMetadata): string[] {
   return sources.slice(0, 3);
 }
 
+function extractReply(
+  parts?: Array<{ text?: string; thought?: boolean }>
+): string {
+  if (!parts?.length) return "";
+  return parts
+    .filter((part) => part.text && !part.thought)
+    .map((part) => part.text?.trim() ?? "")
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -265,6 +285,7 @@ export async function POST(req: Request) {
       generationConfig: {
         temperature: 0.3,
         maxOutputTokens: MAX_OUTPUT_TOKENS,
+        thinkingConfig: { thinkingBudget: 0 },
       },
     };
 
@@ -283,22 +304,30 @@ export async function POST(req: Request) {
 
     if (!geminiResponse.ok) {
       const errText = await geminiResponse.text();
+      console.error("Gemini error", geminiResponse.status, errText.slice(0, 500));
       return NextResponse.json(
-        { error: "Gemini isteği başarısız oldu.", detail: errText },
+        {
+          error:
+            geminiResponse.status === 404
+              ? "Gemini modeli artık kullanılamıyor. Lütfen GEMINI_MODEL değerini gemini-2.5-flash olarak güncelleyin."
+              : "Gemini isteği başarısız oldu.",
+        },
         { status: 502 }
       );
     }
 
     const data = (await geminiResponse.json()) as {
       candidates?: Array<{
-        content?: { parts?: Array<{ text?: string }> };
+        content?: {
+          parts?: Array<{ text?: string; thought?: boolean }>;
+        };
         groundingMetadata?: GroundingMetadata;
       }>;
       usageMetadata?: GeminiUsage;
     };
 
     const candidate = data.candidates?.[0];
-    let reply = candidate?.content?.parts?.[0]?.text?.trim();
+    const reply = extractReply(candidate?.content?.parts);
     if (!reply) {
       return NextResponse.json(
         { error: "Modelden yanıt alınamadı." },
@@ -307,15 +336,14 @@ export async function POST(req: Request) {
     }
 
     const sources = extractSources(candidate?.groundingMetadata);
-    if (sources.length > 0) {
-      const label = locale === "en" ? "Sources" : "Kaynaklar";
-      reply += `\n\n${label}: ${sources.join(" | ")}`;
-    }
+    const label = locale === "en" ? "Sources" : "Kaynaklar";
+    const finalReply =
+      sources.length > 0 ? `${reply}\n\n${label}: ${sources.join(" | ")}` : reply;
 
     const actualCost = calculateActualUsd(data.usageMetadata);
     dailyBudgetState.spentUsd += actualCost;
 
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply: finalReply });
   } catch {
     return NextResponse.json(
       { error: "İstek işlenirken bir hata oluştu." },

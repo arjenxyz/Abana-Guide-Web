@@ -6,7 +6,6 @@ import About from "@/components/About";
 import Places from "@/components/Places";
 import Activities from "@/components/Activities";
 import Gallery from "@/components/Gallery";
-import Panorama from "@/components/Panorama";
 import Transport from "@/components/Transport";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -26,7 +25,6 @@ export default function Home() {
         <Places />
         <Activities />
         <Gallery />
-        <Panorama />
         <Transport />
         <Footer />
         <ScrollToTop />

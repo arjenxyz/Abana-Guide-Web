@@ -76,18 +76,20 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error("API yanıtı başarısız.");
+        const data = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(data?.error || t.chat.error);
       }
 
       const data = (await response.json()) as { reply?: string };
       const reply = data.reply?.trim() || t.chat.noReply;
 
       setMessages((prev) => [...prev, { role: "bot", text: reply }]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: t.chat.error },
-      ]);
+    } catch (error) {
+      const fallback =
+        error instanceof Error && error.message ? error.message : t.chat.error;
+      setMessages((prev) => [...prev, { role: "bot", text: fallback }]);
     } finally {
       setIsLoading(false);
     }

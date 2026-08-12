@@ -19,12 +19,12 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import { photos } from "@/lib/photos";
 
 const placeImages = [
-  photos.falez,
-  photos.bayrak,
-  photos.orman,
   photos.sahilKoy,
+  photos.toza,
+  photos.orman,
+  photos.kordon,
   photos.yesilyuva,
-  photos.konak,
+  photos.cami,
 ];
 
 const badgeIcons = [FaHiking, FaBinoculars, FaTree, FaWater, FaMountain, FaMosque];

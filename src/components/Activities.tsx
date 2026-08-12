@@ -9,7 +9,6 @@ import {
   FaUtensils,
 } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import { photos } from "@/lib/photos";
 
 const activityIcons = [
   FaHiking,
@@ -26,13 +25,9 @@ export default function Activities() {
   return (
     <section
       id="aktiviteler"
-      className="py-20 sm:py-28 bg-dark text-white relative overflow-hidden"
+      className="py-20 sm:py-28 bg-dark text-white"
     >
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-10"
-        style={{ backgroundImage: `url('${photos.piknik}')` }}
-      />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12 sm:mb-16">
           <span className="text-primary-light text-sm font-semibold tracking-widest uppercase">
             {t.activities.tag}

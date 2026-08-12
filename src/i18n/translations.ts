@@ -13,7 +13,6 @@ export const translations = {
       places: "Gezilecek Yerler",
       activities: "Aktiviteler",
       gallery: "Galeri",
-      panorama: "360°",
       transport: "Ulaşım",
       contact: "İletişim",
       menu: "Menü",
@@ -110,97 +109,85 @@ export const translations = {
     gallery: {
       tag: "Fotoğraflar",
       title: "Galeri",
-      items: [
-        "Abana Sahili",
-        "Yağmur sonrası gökkuşağı",
-        "Yeşilyuva Tabiat Parkı",
-        "Deniz manzaralı piknik",
-        "Kordon ve sahil",
-        "Gün batımı",
-        "Tarihi ahşap konak",
-        "Fırtınalı Karadeniz",
-      ],
-    },
-    panorama: {
-      tag: "Sanal Tur",
-      title: "360° Panorama",
-      intro:
-        "Abana’da çekilmiş geniş panoramalarda sağa sola kaydırarak sahili, mesire alanını ve gece manzarasını gezin. Aşağıda belediyenin Street View turu da duruyor.",
-      hint: "Fareyle sürükleyin veya parmağınızla kaydırın. Ok tuşlarıyla da bakış açısını kaydırabilirsiniz.",
-      scenes: [
-        {
-          title: "Sahil kordonu",
-          desc: "Denizden ilçe meydanına, palmiyeler ve caminin minaresine kadar sahil şeridi",
-        },
-        {
-          title: "Yeşilyuva mesire",
-          desc: "Çamlık, piknik masaları, mangal alanı ve denize açılan orman içi durak",
-        },
-        {
-          title: "Gece manzarası",
-          desc: "Yamaçtaki evler ve bulutların altındaki Abana gecesi",
-        },
-      ],
-      location: "Abana Merkez — Street View",
-      locationDesc: "Merkez Mahallesi, Atatürk Bulvarı çevresi",
-      openOfficial: "Belediye 360° turu",
+      close: "Galeriyi kapat",
+      prev: "Önceki fotoğraf",
+      next: "Sonraki fotoğraf",
+      showMore: "Tümünü göster",
+      showLess: "Daha az göster",
     },
     transport: {
       tag: "Nasıl Gidilir?",
       title: "Ulaşım Bilgileri",
       intro:
-        "Abana, Kastamonu'nun Karadeniz kıyısında; il merkezine yaklaşık 98 km uzaklıktadır. İlçe küçük olduğu için merkeze vardıktan sonra çoğu yere yürüyerek veya kısa minibüs yolculuğuyla ulaşılır.",
-      items: [
-        {
-          title: "Özel Araç",
-          desc: "En pratik ve esnek seçenek. Yaz sezonunda sahil yolunda manzara molaları planlayın.",
-          points: [
-            "Kastamonu → Abana: D010, yaklaşık 98 km / 1 saat 30 dk – 2 saat",
-            "Güzergâh: Kastamonu – Devrekâni – Bozkurt – Abana",
-            "İstanbul → Abana: yaklaşık 520–560 km / 7–8 saat (Karadeniz sahil yolu veya Ankara üzerinden)",
-            "Ankara → Abana: yaklaşık 320–350 km / 4,5–5,5 saat",
-            "İnebolu → Abana: sahil yolu, yaklaşık 25 km / 25–35 dk",
-            "Çatalzeytin → Abana: doğu komşu ilçe, kısa sahil bağlantısı",
-          ],
+        "Abana’ya ulaşım Kastamonu üzerinden planlanır. Önce nereden başlayacağınızı seçin; ardından otogardan Abana’ya gidiş seçeneklerini adım adım gösterelim.",
+      planner: {
+        stepStart: "Başlangıç",
+        stepAirport: "Havalimanı",
+        stepAbana: "Abana",
+        startQuestion: "Lütfen başlangıç noktanızı seçin",
+        startHint: "Havalimanına mı indiniz, yoksa doğrudan Kastamonu otogarında mısınız?",
+        origins: {
+          airport: "Havalimanı",
+          station: "Kastamonu Otogarı",
+          airportHint: "KFS — iniş sonrası yönlendirme",
+          stationHint: "Minibüs veya özel araç seçimi",
         },
-        {
-          title: "Otobüs & Minibüs",
-          desc: "Abana'ya doğrudan şehirlerarası sefer azdır; çoğu yolcu Kastamonu veya İnebolu aktarması kullanır.",
-          points: [
-            "İstanbul, Ankara ve diğer illerden Kastamonu otogarına otobüs",
-            "Kastamonu otogarından Abana / Bozkurt / İnebolu minibüs veya dolmuş hatları",
-            "Yaz aylarında sefer sıklığı artar; kışın son seferi kaçırmamak için sorun",
-            "İnebolu üzerinden gelenler sahil minibüsleriyle Abana'ya bağlanır",
-            "İlçe içi: merkez küçük, çoğu nokta 10 dakikalık yürüme mesafesinde",
-          ],
+        back: "Geri",
+        changeStart: "Başlangıç noktasını değiştir",
+        airport: {
+          title: "Havalimanından sonra",
+          intro:
+            "Kastamonu Havalimanı’na (KFS) indikten sonra Abana yolculuğu genelde otogar üzerinden devam eder.",
+          municipalTitle: "Belediye otobüsü",
+          municipalDesc:
+            "Uçak inişinin ardından havalimanı çıkışında belediye otobüsü beklemektedir. Hızlı olun — kısa sürede dolabilir. Bu servisle Kastamonu otogarına ulaşabilirsiniz.",
+          taxiTitle: "Taksi veya özel araç",
+          taxiDesc:
+            "Taksi ya da kiralık araç tercih edecekseniz hedefiniz Kastamonu otogarı olmalıdır. Oradan Abana minibüsüne geçebilir veya özel araçla devam edebilirsiniz.",
+          mapTitle: "Havalimanı → Kastamonu Otogarı",
+          mapCta: "Rotayı Google Haritalar’da aç",
+          continue: "Otogara vardım, devam et",
         },
-        {
-          title: "Havayolu",
-          desc: "En yakın havalimanı Kastamonu (KFS). Oradan karayoluyla Abana'ya devam edilir.",
-          points: [
-            "Kastamonu Havalimanı (KFS): Abana'ya yaklaşık 105 km / 1,5–2 saat",
-            "Havalimanından araç kiralama veya Kastamonu merkeze transfer",
-            "Merkezden minibüs / özel araç ile Abana",
-            "Alternatif: Sinop, Zonguldak Çaycuma veya Samsun havalimanları + karayolu",
-            "Yaz döneminde iç hat seferlerini önceden kontrol edin",
-          ],
+        modeQuestion: "Otogardan Abana’ya nasıl gideceksiniz?",
+        modeHint: "Minibüs veya özel araç seçeneğini işaretleyin",
+        modes: {
+          minibus: "Minibüs",
+          car: "Özel araç",
         },
-      ],
-      distancesTitle: "Yaklaşık mesafeler",
-      distances: [
-        { from: "Kastamonu", km: "98 km", time: "1,5–2 saat" },
-        { from: "İnebolu", km: "25 km", time: "25–35 dk" },
-        { from: "Ankara", km: "320–350 km", time: "4,5–5,5 saat" },
-        { from: "İstanbul", km: "520–560 km", time: "7–8 saat" },
-      ],
-      tipsTitle: "Pratik notlar",
-      tips: [
-        "İlçeyi uçtan uca geçmek yaklaşık 10 dakika sürer; merkeze yakın konaklama yürüyüş için idealdir.",
-        "Hacıveli Kanyonu (~8 km) ve Toza Seyir Tepesi (~12 km) için özel araç veya taksi/minibüs gerekir.",
-        "Temmuz–Eylül arası yoğunluk artar; otopark ve konaklamayı erken planlayın.",
-        "Karadeniz sahil yolu virajlıdır; gece sürüşünde temkinli olun.",
-        "Güncel sefer saatleri için Kastamonu otogarı ve Abana Belediyesi duyurularını kontrol edin.",
-      ],
+        minibus: {
+          title: "Otogardan Abana minibüsü",
+          desc:
+            "Kastamonu otogarından Abana’ya giden minibüs hatları çalışır. Sefer saatleri mevsime göre değişir; yola çıkmadan arayıp teyit edin.",
+          note:
+            "Yaz sezonunda seferler sıklaşır. Son minibüs saatini mutlaka telefonla sorun.",
+          operatorsTitle: "Abana yönü firmalar",
+          operators: [
+            {
+              name: "Sahil Tur",
+              route: "Kastamonu – Abana – Bozkurt",
+              phone: "0366 215 46 76",
+            },
+            {
+              name: "Abana Bozkurt Seyahat",
+              route: "Kastamonu – Abana – Bozkurt",
+              phone: "0366 564 14 88",
+            },
+          ],
+          stationPhone: "0366 214 10 10",
+          stationPhoneLabel: "Kastamonu Otogarı (genel bilgi)",
+        },
+        car: {
+          title: "Özel araçla Abana",
+          desc: "Kastamonu otogarından veya merkezden D010 ile sahile inilir.",
+          points: [
+            "Güzergâh: Kastamonu – Devrekâni – Bozkurt – Abana (D010)",
+            "Mesafe / süre: yaklaşık 98 km, 1,5–2 saat",
+            "Sahil yolu virajlıdır; yazın manzara molası planlayabilirsiniz",
+          ],
+          mapTitle: "Kastamonu → Abana",
+          mapCta: "Rotayı Google Haritalar’da aç",
+        },
+      },
       mapTitle: "Haritada Abana",
     },
     contact: {
@@ -262,7 +249,6 @@ export const translations = {
       places: "Places to Visit",
       activities: "Activities",
       gallery: "Gallery",
-      panorama: "360°",
       transport: "Transport",
       contact: "Contact",
       menu: "Menu",
@@ -359,97 +345,85 @@ export const translations = {
     gallery: {
       tag: "Photos",
       title: "Gallery",
-      items: [
-        "Abana Beach",
-        "Rainbow after the rain",
-        "Yeşilyuva Nature Park",
-        "Picnic with a sea view",
-        "Promenade and coast",
-        "Sunset",
-        "Historic wooden mansion",
-        "Stormy Black Sea",
-      ],
-    },
-    panorama: {
-      tag: "Virtual Tour",
-      title: "360° Panorama",
-      intro:
-        "Swipe left and right through wide panoramas shot in Abana — the waterfront, the picnic woods, and the town at night. The municipality Street View tour is below.",
-      hint: "Drag with the mouse or swipe with your finger. Use the arrows to pan across the scene.",
-      scenes: [
-        {
-          title: "Seafront promenade",
-          desc: "From the shore to the town square, palms and the mosque minaret",
-        },
-        {
-          title: "Yeşilyuva picnic woods",
-          desc: "Pines, picnic tables, a barbecue spot and a clearing that opens to the sea",
-        },
-        {
-          title: "Night view",
-          desc: "Houses on the hillside under clouds on an Abana night",
-        },
-      ],
-      location: "Abana Center — Street View",
-      locationDesc: "Merkez neighborhood, around Atatürk Boulevard",
-      openOfficial: "Municipality 360° tour",
+      close: "Close gallery",
+      prev: "Previous photo",
+      next: "Next photo",
+      showMore: "Show all",
+      showLess: "Show less",
     },
     transport: {
       tag: "How to Get There",
       title: "Transport Information",
       intro:
-        "Abana sits on Kastamonu's Black Sea coast, about 98 km from the provincial center. The town is small: once you arrive, most places are a short walk or minibus ride away.",
-      items: [
-        {
-          title: "Private Car",
-          desc: "The most flexible option. In summer, plan short viewpoint stops along the coastal road.",
-          points: [
-            "Kastamonu → Abana: D010, about 98 km / 1.5–2 hours",
-            "Route: Kastamonu – Devrekâni – Bozkurt – Abana",
-            "Istanbul → Abana: about 520–560 km / 7–8 hours (Black Sea coast or via Ankara)",
-            "Ankara → Abana: about 320–350 km / 4.5–5.5 hours",
-            "İnebolu → Abana: coastal road, about 25 km / 25–35 minutes",
-            "Çatalzeytin → Abana: neighboring district to the east, short coastal link",
-          ],
+        "Getting to Abana is planned via Kastamonu. First choose where you are starting; then we will walk you through the options from the bus station to Abana.",
+      planner: {
+        stepStart: "Start",
+        stepAirport: "Airport",
+        stepAbana: "Abana",
+        startQuestion: "Please select your starting point",
+        startHint: "Did you land at the airport, or are you already at Kastamonu bus station?",
+        origins: {
+          airport: "Airport",
+          station: "Kastamonu Bus Station",
+          airportHint: "KFS — guidance after landing",
+          stationHint: "Choose minibus or private car",
         },
-        {
-          title: "Bus & Minibus",
-          desc: "Direct long-distance buses to Abana are limited; most travelers transfer in Kastamonu or İnebolu.",
-          points: [
-            "Coaches from Istanbul, Ankara and other cities to Kastamonu bus station",
-            "Minibus / dolmuş lines from Kastamonu toward Abana, Bozkurt or İnebolu",
-            "More frequent services in summer; in winter ask for the last departure",
-            "From İnebolu, coastal minibuses continue to Abana",
-            "In town: the center is compact, most spots are within a 10-minute walk",
-          ],
+        back: "Back",
+        changeStart: "Change starting point",
+        airport: {
+          title: "After the airport",
+          intro:
+            "After landing at Kastamonu Airport (KFS), the journey to Abana usually continues via the bus station.",
+          municipalTitle: "Municipal bus",
+          municipalDesc:
+            "A municipal bus waits at the airport exit after your flight lands. Be quick — it fills up fast. This service takes you to Kastamonu bus station.",
+          taxiTitle: "Taxi or private car",
+          taxiDesc:
+            "If you prefer a taxi or rental car, head to Kastamonu bus station. From there you can take a minibus to Abana or continue by car.",
+          mapTitle: "Airport → Kastamonu Bus Station",
+          mapCta: "Open route in Google Maps",
+          continue: "I'm at the station, continue",
         },
-        {
-          title: "Air",
-          desc: "Nearest airport is Kastamonu (KFS). Continue to Abana by road.",
-          points: [
-            "Kastamonu Airport (KFS): about 105 km / 1.5–2 hours to Abana",
-            "Car rental or transfer from the airport to Kastamonu center",
-            "Then minibus or private car to Abana",
-            "Alternatives: Sinop, Zonguldak Çaycuma or Samsun airports + road transfer",
-            "Check domestic flight schedules in advance during the summer season",
-          ],
+        modeQuestion: "How will you get from the station to Abana?",
+        modeHint: "Choose minibus or private car",
+        modes: {
+          minibus: "Minibus",
+          car: "Private car",
         },
-      ],
-      distancesTitle: "Approximate distances",
-      distances: [
-        { from: "Kastamonu", km: "98 km", time: "1.5–2 hours" },
-        { from: "İnebolu", km: "25 km", time: "25–35 min" },
-        { from: "Ankara", km: "320–350 km", time: "4.5–5.5 hours" },
-        { from: "Istanbul", km: "520–560 km", time: "7–8 hours" },
-      ],
-      tipsTitle: "Practical notes",
-      tips: [
-        "Crossing the district end to end takes about 10 minutes; staying near the center is ideal for walking.",
-        "Hacıveli Canyon (~8 km) and Toza Viewpoint (~12 km) need a car, taxi or minibus.",
-        "July–September is busier; book parking and lodging early.",
-        "The Black Sea coastal road is winding; drive carefully at night.",
-        "Check current timetables via Kastamonu bus station and Abana Municipality notices.",
-      ],
+        minibus: {
+          title: "Minibus from the station to Abana",
+          desc:
+            "Minibuses run from Kastamonu bus station to Abana. Schedules vary by season — call ahead before you travel.",
+          note:
+            "Services are more frequent in summer. Always confirm the last minibus by phone.",
+          operatorsTitle: "Operators toward Abana",
+          operators: [
+            {
+              name: "Sahil Tur",
+              route: "Kastamonu – Abana – Bozkurt",
+              phone: "0366 215 46 76",
+            },
+            {
+              name: "Abana Bozkurt Seyahat",
+              route: "Kastamonu – Abana – Bozkurt",
+              phone: "0366 564 14 88",
+            },
+          ],
+          stationPhone: "0366 214 10 10",
+          stationPhoneLabel: "Kastamonu Bus Station (general info)",
+        },
+        car: {
+          title: "Driving to Abana",
+          desc: "From Kastamonu bus station or the city center, take the D010 down to the coast.",
+          points: [
+            "Route: Kastamonu – Devrekâni – Bozkurt – Abana (D010)",
+            "Distance / time: about 98 km, 1.5–2 hours",
+            "The coastal road is winding; in summer you can plan a viewpoint stop",
+          ],
+          mapTitle: "Kastamonu → Abana",
+          mapCta: "Open route in Google Maps",
+        },
+      },
       mapTitle: "Abana on the map",
     },
     contact: {
