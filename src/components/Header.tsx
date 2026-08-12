@@ -19,7 +19,6 @@ export default function Header() {
     { href: "#aktiviteler", label: t.nav.activities },
     { href: "#galeri", label: t.nav.gallery },
     { href: "#ulasim", label: t.nav.transport },
-    { href: "#iletisim", label: t.nav.contact },
   ];
 
   useEffect(() => {
@@ -60,7 +59,6 @@ export default function Header() {
         </Link>
 
         <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex items-center gap-1">
-          <ChatbotTrigger scrolled={scrolled} />
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -78,8 +76,9 @@ export default function Header() {
 
         <div className="relative z-10 flex items-center gap-2">
           <LanguageSwitcher scrolled={scrolled} />
+          <ChatbotTrigger scrolled={scrolled} className="hidden lg:flex" />
           <div className="flex items-center gap-1 lg:hidden">
-            <ChatbotTrigger scrolled={scrolled} />
+            <ChatbotTrigger scrolled={scrolled} compact />
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className={`text-xl p-2 ${

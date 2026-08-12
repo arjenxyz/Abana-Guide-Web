@@ -7,7 +7,6 @@ import Places from "@/components/Places";
 import Activities from "@/components/Activities";
 import Gallery from "@/components/Gallery";
 import Transport from "@/components/Transport";
-import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import Chatbot from "@/components/Chatbot";
@@ -27,7 +26,6 @@ export default function Home() {
         <Activities />
         <Gallery />
         <Transport />
-        <Contact />
         <Footer />
         <ScrollToTop />
         <Chatbot />

@@ -6,11 +6,13 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 
 type ChatbotTriggerProps = {
   scrolled: boolean;
+  compact?: boolean;
   className?: string;
 };
 
 export default function ChatbotTrigger({
   scrolled,
+  compact = false,
   className = "",
 }: ChatbotTriggerProps) {
   const { open } = useChatbot();
@@ -23,11 +25,11 @@ export default function ChatbotTrigger({
         scrolled
           ? "text-gray-700 hover:text-primary"
           : "text-white/90 hover:text-white"
-      } ${className}`}
+      } ${compact ? "px-2" : ""} ${className}`}
       aria-label={t.chat.open}
     >
-      <FaComments className="text-base" />
-      {t.nav.assistant}
+      <FaComments className="text-lg sm:text-base" />
+      {!compact && t.nav.assistant}
     </button>
   );
 }

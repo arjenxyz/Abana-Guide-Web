@@ -54,15 +54,23 @@ export default function Hero() {
         </div>
       ))}
 
-      <div className="relative z-10 h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full">
+      <div className="relative z-10 flex h-full items-center gap-3 px-4 sm:gap-6 sm:px-6">
+        <button
+          onClick={prev}
+          className="absolute left-4 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:static sm:translate-y-0 sm:shrink-0"
+          aria-label="Previous slide"
+        >
+          <FaChevronLeft />
+        </button>
+
+        <div className="relative mx-auto w-full min-w-0 flex-1 max-w-7xl px-2 sm:px-4 lg:px-6">
           {slides.map((slide, i) => (
             <div
               key={i}
               className={`transition-all duration-700 ${
                 i === current
                   ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-8 absolute"
+                  : "pointer-events-none absolute opacity-0 translate-y-8"
               }`}
             >
               {i === current && (
@@ -84,6 +92,14 @@ export default function Hero() {
             </div>
           ))}
         </div>
+
+        <button
+          onClick={next}
+          className="absolute right-4 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:static sm:translate-y-0 sm:shrink-0"
+          aria-label="Next slide"
+        >
+          <FaChevronRight />
+        </button>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-3">
@@ -99,19 +115,6 @@ export default function Hero() {
           />
         ))}
       </div>
-
-      <button
-        onClick={prev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all hidden sm:flex"
-      >
-        <FaChevronLeft />
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all hidden sm:flex"
-      >
-        <FaChevronRight />
-      </button>
     </section>
   );
 }
