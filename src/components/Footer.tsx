@@ -5,10 +5,33 @@ import {
   FaWater,
   FaFacebookF,
   FaInstagram,
-  FaTwitter,
+  FaWhatsapp,
   FaYoutube,
 } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
+
+const MUNICIPAL_SOCIAL = [
+  {
+    href: "https://www.facebook.com/abanabld",
+    icon: FaFacebookF,
+    label: "Abana Belediyesi Facebook",
+  },
+  {
+    href: "https://www.instagram.com/abanabld/",
+    icon: FaInstagram,
+    label: "Abana Belediyesi Instagram",
+  },
+  {
+    href: "https://www.youtube.com/@abanabelediyesi2955",
+    icon: FaYoutube,
+    label: "Abana Belediyesi YouTube",
+  },
+  {
+    href: "https://wa.me/905435643737",
+    icon: FaWhatsapp,
+    label: "Abana Belediyesi WhatsApp",
+  },
+] as const;
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -40,10 +63,10 @@ export default function Footer() {
                 {t.nav.places}
               </Link>
               <Link
-                href="#aktiviteler"
+                href="#galeri"
                 className="text-white/50 hover:text-primary-light transition-colors text-sm"
               >
-                {t.nav.activities}
+                {t.nav.gallery}
               </Link>
               <Link
                 href="#ulasim"
@@ -82,23 +105,24 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4">{t.footer.social}</h4>
             <div className="flex gap-3">
-              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map(
-                (Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="w-10 h-10 bg-white/5 hover:bg-primary/20 rounded-xl flex items-center justify-center text-white/50 hover:text-primary-light transition-all"
-                  >
-                    <Icon />
-                  </a>
-                )
-              )}
+              {MUNICIPAL_SOCIAL.map(({ href, icon: Icon, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-10 h-10 bg-white/5 hover:bg-primary/20 rounded-xl flex items-center justify-center text-white/50 hover:text-primary-light transition-all"
+                >
+                  <Icon />
+                </a>
+              ))}
             </div>
           </div>
         </div>
-        <div className="border-t border-white/10 pt-8 text-center text-white/30 text-sm space-y-1">
+        <div className="border-t border-white/10 pt-8 text-center text-white/30 text-sm space-y-2 max-w-2xl mx-auto">
           <p>{t.footer.copyright}</p>
-          <p>{t.footer.photoCredit}</p>
+          <p className="text-xs leading-relaxed">{t.footer.disclaimer}</p>
         </div>
       </div>
     </footer>

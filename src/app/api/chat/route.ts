@@ -73,15 +73,21 @@ function getSystemPrompt(locale: string): string {
 }
 
 const MAX_OUTPUT_TOKENS = 500;
-const RAW_GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const FALLBACK_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-flash-latest",
+] as const;
 const DEPRECATED_MODELS: Record<string, string> = {
   "gemini-2.0-flash": "gemini-2.5-flash",
   "gemini-2.0-flash-001": "gemini-2.5-flash",
   "gemini-2.0-flash-lite": "gemini-2.5-flash-lite",
   "gemini-1.5-flash": "gemini-2.5-flash",
+  "gemini-1.5-flash-latest": "gemini-2.5-flash",
   "gemini-1.5-pro": "gemini-2.5-flash",
+  "gemini-1.5-pro-latest": "gemini-2.5-flash",
+  "gemini-pro": "gemini-2.5-flash",
 };
-const GEMINI_MODEL = DEPRECATED_MODELS[RAW_GEMINI_MODEL] ?? RAW_GEMINI_MODEL;
 const USE_GOOGLE_SEARCH = process.env.GEMINI_USE_SEARCH !== "false";
 const RATE_LIMIT_PER_MINUTE = Number(
   process.env.CHAT_RATE_LIMIT_PER_MINUTE ?? 20
@@ -237,6 +243,131 @@ function extractReply(
     .trim();
 }
 
+function normalizeModelName(raw?: string): string {
+  const cleaned = (raw ?? "gemini-2.5-flash").trim().replace(/^models\//, "");
+  return DEPRECATED_MODELS[cleaned] ?? cleaned;
+}
+
+function resolveModelCandidates(): string[] {
+  const primary = normalizeModelName(process.env.GEMINI_MODEL);
+  return [...new Set([primary, ...FALLBACK_MODELS])];
+}
+
+function parseGeminiError(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: { message?: string; status?: string };
+    };
+    return parsed.error?.message?.trim() ?? body.slice(0, 200);
+  } catch {
+    return body.slice(0, 200);
+  }
+}
+
+type GeminiRequestOptions = {
+  useSearch: boolean;
+  useThinkingBudget: boolean;
+};
+
+function buildGeminiRequestBody(
+  messages: ChatMessage[],
+  systemPrompt: string,
+  options: GeminiRequestOptions
+): Record<string, unknown> {
+  const generationConfig: Record<string, unknown> = {
+    temperature: 0.3,
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+  };
+
+  if (options.useThinkingBudget) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
+
+  const requestBody: Record<string, unknown> = {
+    systemInstruction: {
+      parts: [{ text: systemPrompt.trim() }],
+    },
+    contents: toGeminiContents(messages),
+    generationConfig,
+  };
+
+  if (options.useSearch) {
+    requestBody.tools = [{ google_search: {} }];
+  }
+
+  return requestBody;
+}
+
+async function callGemini(
+  apiKey: string,
+  model: string,
+  requestBody: Record<string, unknown>
+) {
+  return fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    }
+  );
+}
+
+async function generateWithGemini(
+  apiKey: string,
+  messages: ChatMessage[],
+  systemPrompt: string
+) {
+  const models = resolveModelCandidates();
+  const attempts: GeminiRequestOptions[] = USE_GOOGLE_SEARCH
+    ? [
+        { useSearch: true, useThinkingBudget: true },
+        { useSearch: true, useThinkingBudget: false },
+        { useSearch: false, useThinkingBudget: false },
+      ]
+    : [{ useSearch: false, useThinkingBudget: false }];
+
+  let lastError = "Gemini isteği başarısız oldu.";
+
+  for (const model of models) {
+    for (const options of attempts) {
+      const response = await callGemini(
+        apiKey,
+        model,
+        buildGeminiRequestBody(messages, systemPrompt, options)
+      );
+
+      if (response.ok) {
+        return { response, model };
+      }
+
+      const errText = await response.text();
+      lastError = parseGeminiError(errText);
+      console.error(
+        "Gemini error",
+        model,
+        response.status,
+        options,
+        errText.slice(0, 500)
+      );
+
+      if (response.status === 404) {
+        break;
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        return { response, model, error: lastError };
+      }
+
+      if (response.status !== 400) {
+        return { response, model, error: lastError };
+      }
+    }
+  }
+
+  return { response: null, model: models[0], error: lastError };
+}
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -277,46 +408,26 @@ export async function POST(req: Request) {
       );
     }
 
-    const requestBody: Record<string, unknown> = {
-      systemInstruction: {
-        parts: [{ text: systemPrompt.trim() }],
-      },
-      contents: toGeminiContents(messages),
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: MAX_OUTPUT_TOKENS,
-        thinkingConfig: { thinkingBudget: 0 },
-      },
-    };
+    const geminiResult = await generateWithGemini(apiKey, messages, systemPrompt);
 
-    if (USE_GOOGLE_SEARCH) {
-      requestBody.tools = [{ google_search: {} }];
-    }
+    if (!geminiResult.response?.ok) {
+      const status = geminiResult.response?.status ?? 502;
+      const detail = geminiResult.error ?? "Gemini isteği başarısız oldu.";
+      const isModelError =
+        status === 404 ||
+        /not found|not supported for generateContent/i.test(detail);
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      }
-    );
-
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      console.error("Gemini error", geminiResponse.status, errText.slice(0, 500));
       return NextResponse.json(
         {
-          error:
-            geminiResponse.status === 404
-              ? "Gemini modeli artık kullanılamıyor. Lütfen GEMINI_MODEL değerini gemini-2.5-flash olarak güncelleyin."
-              : "Gemini isteği başarısız oldu.",
+          error: isModelError
+            ? `Gemini modeli kullanılamıyor (${normalizeModelName(process.env.GEMINI_MODEL)}). Vercel/local ortamında GEMINI_MODEL=gemini-2.5-flash ayarlayın. Detay: ${detail}`
+            : detail,
         },
         { status: 502 }
       );
     }
 
-    const data = (await geminiResponse.json()) as {
+    const data = (await geminiResult.response.json()) as {
       candidates?: Array<{
         content?: {
           parts?: Array<{ text?: string; thought?: boolean }>;

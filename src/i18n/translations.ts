@@ -11,7 +11,6 @@ export const translations = {
       home: "Ana Sayfa",
       about: "Hakkında",
       places: "Gezilecek Yerler",
-      activities: "Aktiviteler",
       gallery: "Galeri",
       transport: "Ulaşım",
       contact: "İletişim",
@@ -34,7 +33,7 @@ export const translations = {
         {
           title: "Doğa ile İç İçe",
           desc: "Hacıveli Kanyonu, Kent Ormanı ve Toza Seyir Tepesi sizi bekliyor",
-          cta: "Aktiviteleri Keşfet",
+          cta: "Gezilecek Yerler",
         },
       ],
     },
@@ -92,18 +91,6 @@ export const translations = {
           badge: "Tarih",
           meta: ["12 km", "Tarihi"],
         },
-      ],
-    },
-    activities: {
-      tag: "Yapılacaklar",
-      title: "Aktiviteler",
-      items: [
-        { title: "Trekking", desc: "Hacıveli Kanyonu ve dağ parkurlarında doğa yürüyüşleri" },
-        { title: "Deniz & Plaj", desc: "Temiz kumsallarda yüzme, güneşlenme ve su sporları" },
-        { title: "Fotoğrafçılık", desc: "Seyir tepeleri ve doğa alanlarında profesyonel çekim" },
-        { title: "Kamp", desc: "Yeşilyuva Tabiat Parkı'nda doğayla iç içe kamp" },
-        { title: "Balıkçılık", desc: "Karadeniz sahilinde sportif balık avı deneyimi" },
-        { title: "Yerel Lezzetler", desc: "Karadeniz mutfağının eşsiz tatlarını keşfedin" },
       ],
     },
     gallery: {
@@ -213,8 +200,8 @@ export const translations = {
       news: "Abana Haber",
       governorship: "Kastamonu Valiliği",
       copyright: "© 2026 Abana Gezi Rehberi. Tüm hakları saklıdır.",
-      photoCredit:
-        "Fotoğraflar: Abana yerinde çekimler · Wikimedia Commons · Pexels",
+      disclaimer:
+        "Bu site Abana Belediyesi ile resmi bir bağlantı taşımaz. Proje, Abana’yı tanıtmak amacıyla Arjen tarafından gönüllü olarak geliştirilmiştir.",
     },
     chat: {
       open: "Chatbot aç",
@@ -247,7 +234,6 @@ export const translations = {
       home: "Home",
       about: "About",
       places: "Places to Visit",
-      activities: "Activities",
       gallery: "Gallery",
       transport: "Transport",
       contact: "Contact",
@@ -270,7 +256,7 @@ export const translations = {
         {
           title: "Immersed in Nature",
           desc: "Hacıveli Canyon, City Forest and Toza Viewpoint await you",
-          cta: "Discover Activities",
+          cta: "Places to Visit",
         },
       ],
     },
@@ -328,18 +314,6 @@ export const translations = {
           badge: "History",
           meta: ["12 km", "Historic"],
         },
-      ],
-    },
-    activities: {
-      tag: "Things to Do",
-      title: "Activities",
-      items: [
-        { title: "Trekking", desc: "Nature hikes in Hacıveli Canyon and mountain trails" },
-        { title: "Sea & Beach", desc: "Swimming, sunbathing and water sports on clean beaches" },
-        { title: "Photography", desc: "Professional shots at viewpoints and natural areas" },
-        { title: "Camping", desc: "Camp in nature at Yeşilyuva Nature Park" },
-        { title: "Fishing", desc: "Sport fishing experience on the Black Sea coast" },
-        { title: "Local Cuisine", desc: "Discover the unique flavors of Black Sea cuisine" },
       ],
     },
     gallery: {
@@ -449,8 +423,8 @@ export const translations = {
       news: "Abana News",
       governorship: "Kastamonu Governorship",
       copyright: "© 2026 Abana Travel Guide. All rights reserved.",
-      photoCredit:
-        "Photos: shot on location in Abana · Wikimedia Commons · Pexels",
+      disclaimer:
+        "This site is not officially affiliated with Abana Municipality. The project was voluntarily developed by Arjen to promote Abana.",
     },
     chat: {
       open: "Open chatbot",

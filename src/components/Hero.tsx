@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { photos } from "@/lib/photos";
 
-const slideHrefs = ["#yerler", "#hakkinda", "#aktiviteler"];
+const slideHrefs = ["#yerler", "#hakkinda", "#yerler"];
 
 export default function Hero() {
   const { locale, t } = useLanguage();

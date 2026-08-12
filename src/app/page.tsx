@@ -4,7 +4,6 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Places from "@/components/Places";
-import Activities from "@/components/Activities";
 import Gallery from "@/components/Gallery";
 import Transport from "@/components/Transport";
 import Footer from "@/components/Footer";
@@ -23,7 +22,6 @@ export default function Home() {
         <Hero />
         <About />
         <Places />
-        <Activities />
         <Gallery />
         <Transport />
         <Footer />
