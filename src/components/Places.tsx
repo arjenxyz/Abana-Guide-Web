@@ -37,6 +37,52 @@ const metaIcons = [
   [FaMapMarkerAlt, FaLandmark],
 ];
 
+export function PlacesGrid() {
+  const { t } = useLanguage();
+
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {t.places.items.map((p, i) => {
+        const BadgeIcon = badgeIcons[i];
+        const icons = metaIcons[i];
+        return (
+          <div
+            key={p.title}
+            className="group bg-white rounded-3xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
+            <div className="relative h-52 overflow-hidden">
+              <img
+                src={placeImages[i]}
+                alt={p.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-primary text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                <BadgeIcon /> {p.badge}
+              </span>
+            </div>
+            <div className="p-5 sm:p-6">
+              <h3 className="font-bold text-lg text-dark mb-2">{p.title}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                {p.desc}
+              </p>
+              <div className="flex gap-4 text-xs text-gray-400">
+                {p.meta.map((text, j) => {
+                  const MetaIcon = icons[j];
+                  return (
+                    <span key={j} className="flex items-center gap-1">
+                      <MetaIcon className="text-primary" /> {text}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Places() {
   const { t } = useLanguage();
 
@@ -52,46 +98,7 @@ export default function Places() {
           </h2>
           <div className="w-16 h-1 bg-primary mx-auto mt-4 rounded-full" />
         </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {t.places.items.map((p, i) => {
-            const BadgeIcon = badgeIcons[i];
-            const icons = metaIcons[i];
-            return (
-              <div
-                key={p.title}
-                className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={placeImages[i]}
-                    alt={p.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-primary text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                    <BadgeIcon /> {p.badge}
-                  </span>
-                </div>
-                <div className="p-5 sm:p-6">
-                  <h3 className="font-bold text-lg text-dark mb-2">{p.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-4">
-                    {p.desc}
-                  </p>
-                  <div className="flex gap-4 text-xs text-gray-400">
-                    {p.meta.map((text, j) => {
-                      const MetaIcon = icons[j];
-                      return (
-                        <span key={j} className="flex items-center gap-1">
-                          <MetaIcon className="text-primary" /> {text}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <PlacesGrid />
       </div>
     </section>
   );

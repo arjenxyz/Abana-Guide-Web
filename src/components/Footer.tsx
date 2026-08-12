@@ -63,6 +63,12 @@ export default function Footer() {
                 {t.nav.places}
               </Link>
               <Link
+                href="#konaklama"
+                className="text-white/50 hover:text-primary-light transition-colors text-sm"
+              >
+                {t.nav.stayEat}
+              </Link>
+              <Link
                 href="#galeri"
                 className="text-white/50 hover:text-primary-light transition-colors text-sm"
               >

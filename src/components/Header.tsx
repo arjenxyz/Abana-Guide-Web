@@ -16,6 +16,7 @@ export default function Header() {
     { href: "#hero", label: t.nav.home },
     { href: "#hakkinda", label: t.nav.about },
     { href: "#yerler", label: t.nav.places },
+    { href: "#konaklama", label: t.nav.stayEat },
     { href: "#galeri", label: t.nav.gallery },
     { href: "#ulasim", label: t.nav.transport },
   ];

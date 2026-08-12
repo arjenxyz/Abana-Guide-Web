@@ -3,9 +3,8 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
-import Places from "@/components/Places";
+import StayAndEat from "@/components/StayAndEat";
 import Gallery from "@/components/Gallery";
-import Transport from "@/components/Transport";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import Chatbot from "@/components/Chatbot";
@@ -21,9 +20,8 @@ export default function Home() {
         <Header />
         <Hero />
         <About />
-        <Places />
+        <StayAndEat />
         <Gallery />
-        <Transport />
         <Footer />
         <ScrollToTop />
         <Chatbot />

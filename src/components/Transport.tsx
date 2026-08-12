@@ -92,7 +92,7 @@ function ChoiceButton({
   );
 }
 
-export default function Transport() {
+export function TransportPlanner() {
   const { t } = useLanguage();
   const p = t.transport.planner;
 
@@ -125,21 +125,6 @@ export default function Transport() {
         ];
 
   return (
-    <section id="ulasim" className="py-16 sm:py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-6 sm:mb-8">
-          <span className="text-primary text-sm font-semibold tracking-widest uppercase">
-            {t.transport.tag}
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold mt-2 text-dark">
-            {t.transport.title}
-          </h2>
-          <div className="w-16 h-1 bg-primary mx-auto mt-3 rounded-full" />
-          <p className="mt-4 max-w-2xl mx-auto text-gray-600 text-sm leading-relaxed">
-            {t.transport.intro}
-          </p>
-        </div>
-
         <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
           <div className="flex items-center gap-2 px-4 sm:px-5 pt-4">
             {progressSteps.map((item) => (
@@ -374,6 +359,28 @@ export default function Transport() {
             </div>
           )}
         </div>
+  );
+}
+
+export default function Transport() {
+  const { t } = useLanguage();
+
+  return (
+    <section id="ulasim" className="py-16 sm:py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-6 sm:mb-8">
+          <span className="text-primary text-sm font-semibold tracking-widest uppercase">
+            {t.transport.tag}
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 text-dark">
+            {t.transport.title}
+          </h2>
+          <div className="w-16 h-1 bg-primary mx-auto mt-3 rounded-full" />
+          <p className="mt-4 max-w-2xl mx-auto text-gray-600 text-sm leading-relaxed">
+            {t.transport.intro}
+          </p>
+        </div>
+        <TransportPlanner />
       </div>
     </section>
   );
