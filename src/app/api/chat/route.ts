@@ -182,7 +182,7 @@ function normalizeMessages(input: unknown): ChatMessage[] {
 
   return input
     .filter((item) => item && typeof item === "object")
-    .map((item) => {
+    .map((item): ChatMessage => {
       const role = (item as { role?: string }).role;
       const text = (item as { text?: string }).text;
       return {

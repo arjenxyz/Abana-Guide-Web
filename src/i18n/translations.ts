@@ -363,4 +363,4 @@ export const translations = {
   },
 } as const;
 
-export type TranslationKeys = typeof translations.tr;
+export type TranslationKeys = (typeof translations)[Locale];
