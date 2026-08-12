@@ -109,6 +109,7 @@ export const translations = {
       intro:
         "Doğa, sahil ve tarih noktalarından konaklama ve yemek seçeneklerine, Kastamonu üzerinden ulaşıma kadar Abana planınızı tek yerden oluşturun. Yaz sezonunda rezervasyon ve telefon teyidi önerilir.",
       tabPlaces: "Gezilecek Yerler",
+      tabPlacesShort: "Yerler",
       tabLodging: "Konaklama",
       tabDining: "Yemek",
       tabTransport: "Ulaşım",
@@ -352,6 +353,7 @@ export const translations = {
       intro:
         "From nature, beach and historic sights to lodging, dining and step-by-step transport from Kastamonu — plan your Abana trip in one place. Book ahead and call to confirm in summer.",
       tabPlaces: "Places to Visit",
+      tabPlacesShort: "Places",
       tabLodging: "Lodging",
       tabDining: "Dining",
       tabTransport: "Transport",

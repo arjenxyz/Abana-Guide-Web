@@ -9,6 +9,7 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaUtensils,
+  type IconType,
 } from "react-icons/fa";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { dining, lodging, telHref } from "@/lib/stay-and-eat";
@@ -59,6 +60,38 @@ export default function StayAndEat() {
     window.history.replaceState(null, "", tabHash(next));
   };
 
+  const tabItems: {
+    id: Tab;
+    icon: IconType;
+    label: string;
+    shortLabel: string;
+  }[] = [
+    {
+      id: "places",
+      icon: FaMapMarkedAlt,
+      label: t.stayEat.tabPlaces,
+      shortLabel: t.stayEat.tabPlacesShort,
+    },
+    {
+      id: "lodging",
+      icon: FaBed,
+      label: t.stayEat.tabLodging,
+      shortLabel: t.stayEat.tabLodging,
+    },
+    {
+      id: "dining",
+      icon: FaUtensils,
+      label: t.stayEat.tabDining,
+      shortLabel: t.stayEat.tabDining,
+    },
+    {
+      id: "transport",
+      icon: FaBus,
+      label: t.stayEat.tabTransport,
+      shortLabel: t.stayEat.tabTransport,
+    },
+  ];
+
   return (
     <section id="konaklama" className="py-20 sm:py-28 bg-white scroll-mt-24">
       <div id="yerler" className="scroll-mt-24" aria-hidden="true" />
@@ -77,54 +110,39 @@ export default function StayAndEat() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 max-w-5xl mx-auto">
-          <div className="inline-flex flex-wrap justify-center rounded-full bg-gray-100 p-1 self-center sm:self-auto">
-            <button
-              type="button"
-              onClick={() => handleTabChange("places")}
-              className={`inline-flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2.5 text-sm font-semibold transition-colors ${
-                tab === "places"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-gray-600 hover:text-dark"
-              }`}
-            >
-              <FaMapMarkedAlt /> {t.stayEat.tabPlaces}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange("lodging")}
-              className={`inline-flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2.5 text-sm font-semibold transition-colors ${
-                tab === "lodging"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-gray-600 hover:text-dark"
-              }`}
-            >
-              <FaBed /> {t.stayEat.tabLodging}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange("dining")}
-              className={`inline-flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2.5 text-sm font-semibold transition-colors ${
-                tab === "dining"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-gray-600 hover:text-dark"
-              }`}
-            >
-              <FaUtensils /> {t.stayEat.tabDining}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange("transport")}
-              className={`inline-flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2.5 text-sm font-semibold transition-colors ${
-                tab === "transport"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-gray-600 hover:text-dark"
-              }`}
-            >
-              <FaBus /> {t.stayEat.tabTransport}
-            </button>
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div
+            role="tablist"
+            aria-label={t.stayEat.tag}
+            className="grid grid-cols-2 gap-2 p-2 bg-gray-100 rounded-2xl lg:grid-cols-4 lg:gap-1.5"
+          >
+            {tabItems.map(({ id, icon: Icon, label, shortLabel }) => {
+              const active = tab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => handleTabChange(id)}
+                  className={`inline-flex min-h-[3.25rem] lg:min-h-0 flex-col lg:flex-row items-center justify-center gap-1.5 rounded-xl lg:rounded-full px-2 py-3 lg:py-2.5 text-xs lg:text-sm font-semibold transition-colors ${
+                    active
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-gray-600 hover:text-dark hover:bg-white/60"
+                  }`}
+                >
+                  <Icon className="text-base lg:text-sm shrink-0" aria-hidden />
+                  <span className="lg:hidden leading-tight text-center">
+                    {shortLabel}
+                  </span>
+                  <span className="hidden lg:inline whitespace-nowrap">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <p className="text-center sm:text-right text-sm text-gray-500 shrink-0">
+          <p className="mt-3 text-center text-sm text-gray-500 px-1">
             {countLabel}
           </p>
         </div>
