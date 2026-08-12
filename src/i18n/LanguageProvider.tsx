@@ -17,12 +17,6 @@ type LanguageContextValue = {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-function getInitialLocale(): Locale {
-  if (typeof window === "undefined") return "tr";
-  const saved = localStorage.getItem("locale");
-  return saved === "en" ? "en" : "tr";
-}
-
 export function useLanguage() {
   const ctx = useContext(LanguageContext);
   if (!ctx) {
@@ -32,7 +26,14 @@ export function useLanguage() {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+  const [locale, setLocaleState] = useState<Locale>("tr");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("locale");
+    if (saved === "en" || saved === "tr") {
+      setLocaleState(saved);
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;

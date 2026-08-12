@@ -17,55 +17,83 @@ type DailyBudgetState = {
   spentUsd: number;
 };
 
-type GeminiUsage = {
-  promptTokenCount?: number;
-  candidatesTokenCount?: number;
-  totalTokenCount?: number;
+type XaiInputMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
 };
 
-type GroundingChunk = {
-  web?: { uri?: string; title?: string };
+type XaiOutputItem = {
+  type?: string;
+  role?: string;
+  content?: Array<{ type?: string; text?: string }>;
 };
 
-type GroundingMetadata = {
-  groundingChunks?: GroundingChunk[];
-  webSearchQueries?: string[];
+type XaiUsage = {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  prompt_tokens?: number;
+  completion_tokens?: number;
 };
+
+type ReasoningEffort = "none" | "low" | "medium" | "high";
+
+type XaiModelConfig = {
+  id: string;
+  reasoning?: ReasoningEffort;
+  inputCost: number;
+  outputCost: number;
+};
+
+/** Text models ordered cheapest-first to stretch free credits. */
+const XAI_TEXT_MODELS: XaiModelConfig[] = [
+  { id: "grok-build-0.1", inputCost: 1, outputCost: 2 },
+  { id: "grok-4.20-0309-non-reasoning", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4.3", reasoning: "none", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4-1-fast-non-reasoning", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4-fast-non-reasoning", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-3-mini", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4.20-0309-reasoning", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4.3", reasoning: "low", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4-1-fast-reasoning", inputCost: 1.25, outputCost: 2.5 },
+  { id: "grok-4-fast-reasoning", inputCost: 1.25, outputCost: 2.5 },
+  {
+    id: "grok-4.20-multi-agent-0309",
+    reasoning: "low",
+    inputCost: 1.25,
+    outputCost: 2.5,
+  },
+  { id: "grok-4.5", reasoning: "low", inputCost: 2, outputCost: 6 },
+  { id: "grok-4.5", reasoning: "medium", inputCost: 2, outputCost: 6 },
+  { id: "grok-2-mini", inputCost: 0.2, outputCost: 0.5 },
+  { id: "grok-2", inputCost: 2, outputCost: 10 },
+  { id: "grok-beta", inputCost: 2, outputCost: 10 },
+];
 
 const SYSTEM_PROMPT_TR = `
 Sen Abana (Kastamonu) için çalışan profesyonel bir turizm asistanısın.
 Ziyaretçilere doğru, pratik ve etkili gezi rehberliği sağlarsın.
-
-## Bilgi Kaynağı
-- Cevaplarını Google Search ile güncel web araştırmasına dayandır.
-- Resmi ve güvenilir kaynaklara öncelik ver: belediye siteleri, valilik, turizm portalları, yerel haber siteleri.
-- Site içeriğine veya önceden tanımlı metinlere bağlı kalma; her soruda güncel bilgi ara.
 
 ## Kurallar
 - Yanıt dili her zaman Türkçe
 - Cevapları net, yardımcı ve turist odaklı ver (3-8 cümle)
 - Somut öneriler sun: yer adı, mesafe, en iyi dönem, pratik ipuçları
 - Abana dışı sorularda nazikçe Abana odağına dön
-- Emin olmadığın bilgiyi uydurma; araştırma sonucu bulamazsan bunu açıkça belirt
-- Konaklama, etkinlik saatleri gibi değişken bilgilerde mutlaka güncel web kaynağına dayan
+- Emin olmadığın bilgiyi uydurma; emin değilsen bunu açıkça belirt
+- Konaklama ve etkinlik saatleri gibi değişken bilgilerde gitmeden önce arayıp teyit etmelerini öner
 `;
 
 const SYSTEM_PROMPT_EN = `
 You are a professional tourism assistant for Abana (Kastamonu, Turkey).
 You provide accurate, practical and effective travel guidance to visitors.
 
-## Information Source
-- Base your answers on current web research via Google Search.
-- Prioritize official and reliable sources: municipality websites, governorship, tourism portals, local news sites.
-- Do not rely on predefined site content; search for up-to-date information for each question.
-
 ## Rules
 - Always respond in English
 - Give clear, helpful, tourist-focused answers (3-8 sentences)
 - Offer concrete suggestions: place names, distances, best seasons, practical tips
 - For off-topic questions, politely redirect to Abana
-- Never fabricate uncertain information; state clearly if research yields no results
-- For accommodation, event hours and variable info, always rely on current web sources
+- Never fabricate uncertain information; state clearly when you are unsure
+- For accommodation and event hours, suggest calling ahead to confirm
 `;
 
 function getSystemPrompt(locale: string): string {
@@ -73,31 +101,13 @@ function getSystemPrompt(locale: string): string {
 }
 
 const MAX_OUTPUT_TOKENS = 500;
-const FALLBACK_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-flash-latest",
-] as const;
-const DEPRECATED_MODELS: Record<string, string> = {
-  "gemini-2.0-flash": "gemini-2.5-flash",
-  "gemini-2.0-flash-001": "gemini-2.5-flash",
-  "gemini-2.0-flash-lite": "gemini-2.5-flash-lite",
-  "gemini-1.5-flash": "gemini-2.5-flash",
-  "gemini-1.5-flash-latest": "gemini-2.5-flash",
-  "gemini-1.5-pro": "gemini-2.5-flash",
-  "gemini-1.5-pro-latest": "gemini-2.5-flash",
-  "gemini-pro": "gemini-2.5-flash",
-};
-const USE_GOOGLE_SEARCH = process.env.GEMINI_USE_SEARCH !== "false";
 const RATE_LIMIT_PER_MINUTE = Number(
   process.env.CHAT_RATE_LIMIT_PER_MINUTE ?? 20
 );
 const RATE_LIMIT_PER_DAY = Number(process.env.CHAT_RATE_LIMIT_PER_DAY ?? 200);
 const DAILY_BUDGET_USD = Number(process.env.CHAT_DAILY_BUDGET_USD ?? 3);
-const INPUT_COST_PER_1M = Number(process.env.GEMINI_INPUT_COST_PER_1M ?? 0.1);
-const OUTPUT_COST_PER_1M = Number(
-  process.env.GEMINI_OUTPUT_COST_PER_1M ?? 0.4
-);
+const DEFAULT_INPUT_COST = Number(process.env.XAI_INPUT_COST_PER_1M ?? 1.25);
+const DEFAULT_OUTPUT_COST = Number(process.env.XAI_OUTPUT_COST_PER_1M ?? 2.5);
 
 const globalForChat = globalThis as typeof globalThis & {
   __chatRateMap?: Map<string, RequestCounter>;
@@ -112,6 +122,10 @@ const dailyBudgetState = globalForChat.__chatDailyBudget ?? {
   spentUsd: 0,
 };
 globalForChat.__chatDailyBudget = dailyBudgetState;
+
+function modelKey(config: XaiModelConfig): string {
+  return `${config.id}:${config.reasoning ?? "default"}`;
+}
 
 function dayKeyFromNow(): string {
   return new Date().toISOString().slice(0, 10);
@@ -167,19 +181,23 @@ function estimateInputTokens(messages: ChatMessage[], systemPrompt: string): num
   return Math.ceil(combined.length / 4);
 }
 
-function estimateWorstCaseUsd(messages: ChatMessage[], systemPrompt: string): number {
+function estimateWorstCaseUsd(
+  messages: ChatMessage[],
+  systemPrompt: string,
+  config: XaiModelConfig
+): number {
   const estimatedInputTokens = estimateInputTokens(messages, systemPrompt);
-  const inputCost = (estimatedInputTokens / 1_000_000) * INPUT_COST_PER_1M;
-  const outputCost = (MAX_OUTPUT_TOKENS / 1_000_000) * OUTPUT_COST_PER_1M;
+  const inputCost = (estimatedInputTokens / 1_000_000) * config.inputCost;
+  const outputCost = (MAX_OUTPUT_TOKENS / 1_000_000) * config.outputCost;
   return inputCost + outputCost;
 }
 
-function calculateActualUsd(usage?: GeminiUsage): number {
+function calculateActualUsd(usage: XaiUsage | undefined, config: XaiModelConfig): number {
   if (!usage) return 0;
-  const inputTokens = usage.promptTokenCount ?? 0;
-  const outputTokens = usage.candidatesTokenCount ?? 0;
-  const inputCost = (inputTokens / 1_000_000) * INPUT_COST_PER_1M;
-  const outputCost = (outputTokens / 1_000_000) * OUTPUT_COST_PER_1M;
+  const inputTokens = usage.input_tokens ?? usage.prompt_tokens ?? 0;
+  const outputTokens = usage.output_tokens ?? usage.completion_tokens ?? 0;
+  const inputCost = (inputTokens / 1_000_000) * config.inputCost;
+  const outputCost = (outputTokens / 1_000_000) * config.outputCost;
   return inputCost + outputCost;
 }
 
@@ -208,172 +226,321 @@ function normalizeMessages(input: unknown): ChatMessage[] {
     .slice(-10);
 }
 
-function toGeminiContents(messages: ChatMessage[]) {
-  return messages.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.text }],
-  }));
+function toXaiInput(
+  messages: ChatMessage[],
+  systemPrompt: string
+): XaiInputMessage[] {
+  return [
+    { role: "system", content: systemPrompt.trim() },
+    ...messages.map((m) => ({
+      role: m.role,
+      content: m.text,
+    })),
+  ];
 }
 
-function extractSources(metadata?: GroundingMetadata): string[] {
-  if (!metadata?.groundingChunks) return [];
-  const seen = new Set<string>();
-  const sources: string[] = [];
+function resolveModelCandidates(): XaiModelConfig[] {
+  const customList = process.env.XAI_MODELS?.split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  for (const chunk of metadata.groundingChunks) {
-    const uri = chunk.web?.uri;
-    const title = chunk.web?.title;
-    if (uri && !seen.has(uri)) {
-      seen.add(uri);
-      sources.push(title ? `${title} (${uri})` : uri);
-    }
+  if (customList?.length) {
+    return customList.map((id) => ({
+      id,
+      inputCost: DEFAULT_INPUT_COST,
+      outputCost: DEFAULT_OUTPUT_COST,
+    }));
   }
-  return sources.slice(0, 3);
+
+  const primaryId = (process.env.XAI_MODEL ?? "grok-build-0.1").trim();
+  const primary =
+    XAI_TEXT_MODELS.find((model) => model.id === primaryId) ?? {
+      id: primaryId,
+      inputCost: DEFAULT_INPUT_COST,
+      outputCost: DEFAULT_OUTPUT_COST,
+    };
+
+  const seen = new Set<string>();
+  const ordered: XaiModelConfig[] = [];
+
+  const add = (config: XaiModelConfig) => {
+    const key = modelKey(config);
+    if (seen.has(key)) return;
+    seen.add(key);
+    ordered.push(config);
+  };
+
+  add(primary);
+
+  const byCost = [...XAI_TEXT_MODELS].sort(
+    (a, b) => a.inputCost + a.outputCost - (b.inputCost + b.outputCost)
+  );
+  for (const config of byCost) {
+    add(config);
+  }
+
+  return ordered;
 }
 
-function extractReply(
-  parts?: Array<{ text?: string; thought?: boolean }>
-): string {
-  if (!parts?.length) return "";
-  return parts
-    .filter((part) => part.text && !part.thought)
-    .map((part) => part.text?.trim() ?? "")
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-}
-
-function normalizeModelName(raw?: string): string {
-  const cleaned = (raw ?? "gemini-2.5-flash").trim().replace(/^models\//, "");
-  return DEPRECATED_MODELS[cleaned] ?? cleaned;
-}
-
-function resolveModelCandidates(): string[] {
-  const primary = normalizeModelName(process.env.GEMINI_MODEL);
-  return [...new Set([primary, ...FALLBACK_MODELS])];
-}
-
-function parseGeminiError(body: string): string {
+function parseXaiError(body: string): string {
   try {
     const parsed = JSON.parse(body) as {
-      error?: { message?: string; status?: string };
+      error?: string | { message?: string };
     };
+    if (typeof parsed.error === "string") return parsed.error;
     return parsed.error?.message?.trim() ?? body.slice(0, 200);
   } catch {
     return body.slice(0, 200);
   }
 }
 
-type GeminiRequestOptions = {
-  useSearch: boolean;
-  useThinkingBudget: boolean;
-};
-
-function buildGeminiRequestBody(
-  messages: ChatMessage[],
-  systemPrompt: string,
-  options: GeminiRequestOptions
-): Record<string, unknown> {
-  const generationConfig: Record<string, unknown> = {
-    temperature: 0.3,
-    maxOutputTokens: MAX_OUTPUT_TOKENS,
-  };
-
-  if (options.useThinkingBudget) {
-    generationConfig.thinkingConfig = { thinkingBudget: 0 };
-  }
-
-  const requestBody: Record<string, unknown> = {
-    systemInstruction: {
-      parts: [{ text: systemPrompt.trim() }],
-    },
-    contents: toGeminiContents(messages),
-    generationConfig,
-  };
-
-  if (options.useSearch) {
-    requestBody.tools = [{ google_search: {} }];
-  }
-
-  return requestBody;
-}
-
-async function callGemini(
-  apiKey: string,
-  model: string,
-  requestBody: Record<string, unknown>
-) {
-  return fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    }
+function isQuotaExceeded(status: number, detail: string): boolean {
+  return (
+    status === 429 ||
+    /quota|rate limit|rate-limit|resource exhausted|billing|credits|spending limit/i.test(
+      detail
+    )
   );
 }
 
-async function generateWithGemini(
-  apiKey: string,
-  messages: ChatMessage[],
-  systemPrompt: string
-) {
-  const models = resolveModelCandidates();
-  const attempts: GeminiRequestOptions[] = USE_GOOGLE_SEARCH
-    ? [
-        { useSearch: true, useThinkingBudget: true },
-        { useSearch: true, useThinkingBudget: false },
-        { useSearch: false, useThinkingBudget: false },
-      ]
-    : [{ useSearch: false, useThinkingBudget: false }];
+function isAuthError(status: number): boolean {
+  return status === 401 || status === 403;
+}
 
-  let lastError = "Gemini isteği başarısız oldu.";
+function shouldTryNextModel(status: number, detail: string): boolean {
+  if (isAuthError(status)) return false;
+  if (status === 404 || status === 400 || status === 422) return true;
+  if (isQuotaExceeded(status, detail)) return true;
+  if (status === 402 || status === 503 || status >= 500) return true;
+  if (/not found|not supported|invalid model|does not exist/i.test(detail)) {
+    return true;
+  }
+  return false;
+}
 
-  for (const model of models) {
-    for (const options of attempts) {
-      const response = await callGemini(
-        apiKey,
-        model,
-        buildGeminiRequestBody(messages, systemPrompt, options)
-      );
+function quotaErrorMessage(locale: string): string {
+  if (locale === "en") {
+    return (
+      "All xAI models are unavailable — free credits or quota may be exhausted. " +
+      "Check usage at https://console.x.ai and add credits if needed."
+    );
+  }
+  return (
+    "Tüm xAI modelleri denendi; ücretsiz kredi veya kota tükenmiş olabilir. " +
+    "https://console.x.ai adresinden kullanımı kontrol edin ve gerekirse kredi ekleyin."
+  );
+}
 
-      if (response.ok) {
-        return { response, model };
-      }
+function buildResponsesBody(
+  config: XaiModelConfig,
+  input: XaiInputMessage[]
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model: config.id,
+    input,
+    max_output_tokens: MAX_OUTPUT_TOKENS,
+    store: false,
+    temperature: 0.3,
+  };
 
-      const errText = await response.text();
-      lastError = parseGeminiError(errText);
-      console.error(
-        "Gemini error",
-        model,
-        response.status,
-        options,
-        errText.slice(0, 500)
-      );
+  if (config.reasoning) {
+    body.reasoning = { effort: config.reasoning };
+  }
 
-      if (response.status === 404) {
-        break;
-      }
+  return body;
+}
 
-      if (response.status === 401 || response.status === 403) {
-        return { response, model, error: lastError };
-      }
+function extractResponsesReply(data: {
+  output_text?: string;
+  output?: XaiOutputItem[];
+}): string {
+  if (typeof data.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
 
-      if (response.status !== 400) {
-        return { response, model, error: lastError };
+  const parts: string[] = [];
+  for (const item of data.output ?? []) {
+    if (item.type !== "message") continue;
+    for (const block of item.content ?? []) {
+      if (
+        (block.type === "output_text" || block.type === "text") &&
+        block.text?.trim()
+      ) {
+        parts.push(block.text.trim());
       }
     }
   }
 
-  return { response: null, model: models[0], error: lastError };
+  return parts.join("\n").trim();
+}
+
+function extractChatCompletionReply(data: {
+  choices?: Array<{ message?: { content?: string } }>;
+}): string {
+  const content = data.choices?.[0]?.message?.content;
+  return typeof content === "string" ? content.trim() : "";
+}
+
+async function callXaiResponses(
+  apiKey: string,
+  config: XaiModelConfig,
+  input: XaiInputMessage[]
+) {
+  return fetch("https://api.x.ai/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(buildResponsesBody(config, input)),
+  });
+}
+
+async function callXaiChatCompletions(
+  apiKey: string,
+  config: XaiModelConfig,
+  input: XaiInputMessage[]
+) {
+  return fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.id,
+      messages: input,
+      max_tokens: MAX_OUTPUT_TOKENS,
+      temperature: 0.3,
+    }),
+  });
+}
+
+type XaiSuccess = {
+  ok: true;
+  model: XaiModelConfig;
+  data: Record<string, unknown>;
+  via: "responses" | "chat-completions";
+};
+
+type XaiFailure = {
+  ok: false;
+  error: string;
+  quotaExceeded: boolean;
+  authError: boolean;
+};
+
+async function tryModel(
+  apiKey: string,
+  config: XaiModelConfig,
+  input: XaiInputMessage[]
+): Promise<
+  | XaiSuccess
+  | { ok: false; error: string; quotaExceeded: boolean; authError: boolean; retry: boolean }
+> {
+  const attempts = [
+    { via: "responses" as const, call: callXaiResponses },
+    { via: "chat-completions" as const, call: callXaiChatCompletions },
+  ];
+
+  let lastError = "xAI isteği başarısız oldu.";
+  let lastQuota = false;
+
+  for (const attempt of attempts) {
+    const response = await attempt.call(apiKey, config, input);
+    if (response.ok) {
+      const data = (await response.json()) as Record<string, unknown>;
+      return { ok: true, model: config, data, via: attempt.via };
+    }
+
+    const errText = await response.text();
+    lastError = parseXaiError(errText);
+    lastQuota = isQuotaExceeded(response.status, lastError);
+
+    console.error(
+      "xAI error",
+      modelKey(config),
+      attempt.via,
+      response.status,
+      errText.slice(0, 400)
+    );
+
+    if (isAuthError(response.status)) {
+      return {
+        ok: false,
+        error: lastError,
+        quotaExceeded: false,
+        authError: true,
+        retry: false,
+      };
+    }
+
+    if (response.status === 404 || response.status === 400) {
+      continue;
+    }
+
+    if (!shouldTryNextModel(response.status, lastError)) {
+      break;
+    }
+  }
+
+  return {
+    ok: false,
+    error: lastError,
+    quotaExceeded: lastQuota,
+    authError: false,
+    retry: true,
+  };
+}
+
+async function generateWithXai(
+  apiKey: string,
+  messages: ChatMessage[],
+  systemPrompt: string
+): Promise<XaiSuccess | XaiFailure> {
+  const models = resolveModelCandidates();
+  const input = toXaiInput(messages, systemPrompt);
+  let lastError = "xAI isteği başarısız oldu.";
+  let quotaFailures = 0;
+  let attempts = 0;
+
+  for (const config of models) {
+    attempts += 1;
+    const result = await tryModel(apiKey, config, input);
+
+    if (result.ok) {
+      return result;
+    }
+
+    lastError = result.error;
+
+    if (result.authError) {
+      return { ok: false, error: lastError, quotaExceeded: false, authError: true };
+    }
+
+    if (result.quotaExceeded) {
+      quotaFailures += 1;
+    }
+
+    if (!result.retry) {
+      break;
+    }
+  }
+
+  return {
+    ok: false,
+    error: lastError,
+    quotaExceeded: attempts > 0 && quotaFailures === attempts,
+    authError: false,
+  };
 }
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY tanımlı değil." },
+        { error: "XAI_API_KEY tanımlı değil." },
         { status: 500 }
       );
     }
@@ -397,7 +564,8 @@ export async function POST(req: Request) {
     }
 
     resetBudgetIfNewDay();
-    const estimatedCost = estimateWorstCaseUsd(messages, systemPrompt);
+    const cheapest = resolveModelCandidates()[0];
+    const estimatedCost = estimateWorstCaseUsd(messages, systemPrompt, cheapest);
     if (dailyBudgetState.spentUsd + estimatedCost > DAILY_BUDGET_USD) {
       return NextResponse.json(
         {
@@ -408,37 +576,33 @@ export async function POST(req: Request) {
       );
     }
 
-    const geminiResult = await generateWithGemini(apiKey, messages, systemPrompt);
+    const xaiResult = await generateWithXai(apiKey, messages, systemPrompt);
 
-    if (!geminiResult.response?.ok) {
-      const status = geminiResult.response?.status ?? 502;
-      const detail = geminiResult.error ?? "Gemini isteği başarısız oldu.";
-      const isModelError =
-        status === 404 ||
-        /not found|not supported for generateContent/i.test(detail);
+    if (!xaiResult.ok) {
+      if (xaiResult.quotaExceeded) {
+        return NextResponse.json(
+          { error: quotaErrorMessage(locale) },
+          { status: 429 }
+        );
+      }
 
-      return NextResponse.json(
-        {
-          error: isModelError
-            ? `Gemini modeli kullanılamıyor (${normalizeModelName(process.env.GEMINI_MODEL)}). Vercel/local ortamında GEMINI_MODEL=gemini-2.5-flash ayarlayın. Detay: ${detail}`
-            : detail,
-        },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: xaiResult.error }, { status: 502 });
     }
 
-    const data = (await geminiResult.response.json()) as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{ text?: string; thought?: boolean }>;
-        };
-        groundingMetadata?: GroundingMetadata;
-      }>;
-      usageMetadata?: GeminiUsage;
-    };
+    const reply =
+      xaiResult.via === "responses"
+        ? extractResponsesReply(
+            xaiResult.data as {
+              output_text?: string;
+              output?: XaiOutputItem[];
+            }
+          )
+        : extractChatCompletionReply(
+            xaiResult.data as {
+              choices?: Array<{ message?: { content?: string } }>;
+            }
+          );
 
-    const candidate = data.candidates?.[0];
-    const reply = extractReply(candidate?.content?.parts);
     if (!reply) {
       return NextResponse.json(
         { error: "Modelden yanıt alınamadı." },
@@ -446,15 +610,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const sources = extractSources(candidate?.groundingMetadata);
-    const label = locale === "en" ? "Sources" : "Kaynaklar";
-    const finalReply =
-      sources.length > 0 ? `${reply}\n\n${label}: ${sources.join(" | ")}` : reply;
+    dailyBudgetState.spentUsd += calculateActualUsd(
+      xaiResult.data.usage as XaiUsage | undefined,
+      xaiResult.model
+    );
 
-    const actualCost = calculateActualUsd(data.usageMetadata);
-    dailyBudgetState.spentUsd += actualCost;
-
-    return NextResponse.json({ reply: finalReply });
+    return NextResponse.json({ reply });
   } catch {
     return NextResponse.json(
       { error: "İstek işlenirken bir hata oluştu." },
